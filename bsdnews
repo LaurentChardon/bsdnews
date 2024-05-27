@@ -35,6 +35,10 @@ def clean_html(summary):
     soup = BeautifulSoup(summary, 'html.parser')
     return soup.get_text()
 
+def get_first_line_of_summary(summary):
+    cleaned_summary = clean_html(summary)
+    return cleaned_summary.split('\n', 1)[0]
+
 def build_buffer(feeds, term, use_color=True, display_all=False, display_day=False):
     buffer = []
 
@@ -57,7 +61,7 @@ def build_buffer(feeds, term, use_color=True, display_all=False, display_day=Fal
                 if 'published' in entry:
                     feed_buffer.append(entry.published)
                 if 'summary' in entry:
-                    summary = clean_html(entry.summary).split('\n', 1)[0]  # Get the first line of the cleaned summary
+                    summary = get_first_line_of_summary(entry.summary)
                     feed_buffer.append(summary)
                 feed_buffer.append("")
         
