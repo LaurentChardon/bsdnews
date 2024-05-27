@@ -1,0 +1,2 @@
+include setup.py
+include bsdnews.py

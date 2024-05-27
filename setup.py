@@ -20,4 +20,5 @@ setup(
             'bsdnews=bsdnews:main',
         ],
     },
+    include_package_data=True,
 )
