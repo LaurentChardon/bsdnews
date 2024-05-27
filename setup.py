@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='bsdnews',
-    version='v1.1',
+    version='1.1',
     description='BSD News Reader Script',
     author='Laurent Chardon',
     author_email='laurent.chardon@gmail.com',
