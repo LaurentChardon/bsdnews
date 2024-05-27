@@ -16,12 +16,12 @@ DATA_FILE = os.path.join(DATA_DIR, 'bsdnews_data.json')
 
 # Default feed URLs
 FREEBSD_URL = "https://www.freebsd.org/news/feed.xml"
-OPENBSD_URL = "http://undeadly.org/cgi?action=rss"
+OPENBSD_URL_TEMPLATE = "http://undeadly.org/cgi?action=rss&items={limit}"
 NETBSD_URL = "https://www.netbsd.org/changes/rss-netbsd.xml"
 
 DEFAULT_URLS = [
     FREEBSD_URL,
-    OPENBSD_URL,
+    OPENBSD_URL_TEMPLATE.format(limit=''),
     NETBSD_URL
 ]
 
@@ -39,7 +39,7 @@ def get_first_line_of_summary(summary):
     cleaned_summary = clean_html(summary)
     return cleaned_summary.split('\n', 1)[0]
 
-def build_buffer(feeds, term, use_color=True, display_all=False, display_day=False):
+def build_buffer(feeds, term, use_color=True, display_all=False, display_day=False, limit=None):
     buffer = []
 
     displayed_ids, day_ids = load_displayed_ids(display_all, display_day)
@@ -48,8 +48,12 @@ def build_buffer(feeds, term, use_color=True, display_all=False, display_day=Fal
     for feed in feeds:
         feed_buffer = []
         feed_title = feed.feed.get('title', 'No Title')
-        
-        for entry in feed.entries:
+
+        entries = feed.entries
+        if limit:
+            entries = entries[:limit]
+
+        for entry in entries:
             entry_id = entry.get('id') or entry.get('link')
             if entry_id not in displayed_ids or display_all:
                 new_displayed_ids.add(entry_id)
@@ -64,7 +68,7 @@ def build_buffer(feeds, term, use_color=True, display_all=False, display_day=Fal
                     summary = get_first_line_of_summary(entry.summary)
                     feed_buffer.append(summary)
                 feed_buffer.append("")
-        
+
         if feed_buffer:
             buffer.append(term.bold(feed_title) if use_color else feed_title)
             buffer.append("")
@@ -133,30 +137,34 @@ def save_displayed_ids(new_ids, display_day):
     with open(DATA_FILE, 'w') as f:
         json.dump(data, f)
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description='BSD News Reader')
-    parser.add_argument('-a', '--all', action='store_true', help='Display all news entries')
-    parser.add_argument('-d', '--day', action='store_true', help='Display news as if it was the first time today')
-    parser.add_argument('-n', '--no-color', action='store_true', help='Disable color output')
-    parser.add_argument('-u', '--url', action='append', help='Specify one or more RSS feed URLs', default=DEFAULT_URLS)
-    parser.add_argument('-s', '--silent', action='store_true', help='Suppress message when there is no news')
-    parser.add_argument('--freebsd', action='store_true', help='Display only FreeBSD news')
-    parser.add_argument('--openbsd', action='store_true', help='Display only OpenBSD news')
-    parser.add_argument('--netbsd', action='store_true', help='Display only NetBSD news')
+    parser.add_argument('-a', '--all', action='store_true', help='display all news entries')
+    parser.add_argument('-d', '--day', action='store_true', help='display news as if it was the first time today')
+    parser.add_argument('-n', '--no-color', action='store_true', help='disable color output')
+    parser.add_argument('-u', '--url', action='append', help='specify one or more RSS feed URLs', default=DEFAULT_URLS)
+    parser.add_argument('-s', '--silent', action='store_true', help='suppress message when there is no news')
+    parser.add_argument('-l', '--limit', type=int, help='limit the number of news items displayed for each feed')
+    parser.add_argument('--freebsd', action='store_true', help='display only FreeBSD news')
+    parser.add_argument('--openbsd', action='store_true', help='display only OpenBSD news')
+    parser.add_argument('--netbsd', action='store_true', help='display only NetBSD news')
     args = parser.parse_args()
 
     selected_urls = []
     if args.freebsd:
         selected_urls.append(FREEBSD_URL)
     if args.openbsd:
-        selected_urls.append(OPENBSD_URL)
+        selected_urls.append(OPENBSD_URL_TEMPLATE.format(limit=args.limit if args.limit else ''))
     if args.netbsd:
         selected_urls.append(NETBSD_URL)
 
     if not selected_urls:
-        selected_urls = args.url
+        selected_urls = [url.format(limit=args.limit if 'openbsd' in url else '') for url in args.url]
 
     feeds = [fetch_rss_feed(url) for url in selected_urls]
     term = Terminal()
-    buffer = build_buffer(feeds, term, use_color=not args.no_color, display_all=args.all, display_day=args.day)
+    buffer = build_buffer(feeds, term, use_color=not args.no_color, display_all=args.all, display_day=args.day, limit=args.limit)
     display_buffer(buffer, term, silent=args.silent)
+
+if __name__ == "__main__":
+    main()
