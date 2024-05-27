@@ -1,0 +1,57 @@
+.\" Man page for bsdnews
+.TH BSDNEWS 1 "May 2024" "1.0" "BSD News Reader"
+.SH NAME
+bsdnews \- fetches and displays news headers from various BSD operating system feeds
+.SH SYNOPSIS
+.B bsdnews
+.RI [ options ]
+.SH DESCRIPTION
+.B bsdnews
+is a command-line utility that fetches and displays news headers from various BSD operating system feeds (FreeBSD, OpenBSD, and NetBSD).
+
+.SH OPTIONS
+.TP
+.B \-a, \--all
+Display all news entries.
+.TP
+.B \-d, \--day
+Display news as if it was the first time today.
+.TP
+.B \-n, \--no-color
+Disable color output.
+.TP
+.B \-u, \--url
+Specify one or more RSS feed URLs.
+.TP
+.B \-s, \--silent
+Suppress message when there is no news.
+.TP
+.B \-l, \--limit
+Limit the number of news items displayed for each feed.
+.TP
+.B \--freebsd
+Display only FreeBSD news.
+.TP
+.B \--openbsd
+Display only OpenBSD news.
+.TP
+.B \--netbsd
+Display only NetBSD news.
+
+.SH EXAMPLES
+.TP
+.B bsdnews
+Fetch and display news from all default feeds.
+.TP
+.B bsdnews \--freebsd
+Fetch and display news from the FreeBSD feed only.
+.TP
+.B bsdnews \--limit 5
+Fetch and display up to 5 news items from each feed.
+
+.SH AUTHOR
+Laurent Chardon <laurent.chardon@gmail.com>
+
+.SH LICENSE
+BSD 3-Clause License
+
