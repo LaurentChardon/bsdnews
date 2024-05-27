@@ -11,14 +11,13 @@ from subprocess import call
 import argparse
 from bs4 import BeautifulSoup
 
-# Set the data directory
 DATA_DIR = os.path.expanduser('~/.local/state/bsdnews/')
 DATA_FILE = os.path.join(DATA_DIR, 'bsdnews_data.json')
 
-# Default URLs for the feeds
-FREEBSD_URL = "https://www.freebsd.org/news/feed.xml"  # Updated FreeBSD URL
-OPENBSD_URL = "http://undeadly.org/cgi?action=rss"     # Corrected OpenBSD URL
-NETBSD_URL = "https://www.netbsd.org/changes/rss-netbsd.xml"  # Corrected NetBSD URL
+# Default feed URL
+FREEBSD_URL = "https://www.freebsd.org/news/feed.xml"
+OPENBSD_URL = "http://undeadly.org/cgi?action=rss"
+NETBSD_URL = "https://www.netbsd.org/changes/rss-netbsd.xml"
 
 DEFAULT_URLS = [
     FREEBSD_URL,
@@ -28,7 +27,7 @@ DEFAULT_URLS = [
 
 def fetch_rss_feed(url):
     response = requests.get(url)
-    response.raise_for_status()  # Raise an error for bad status codes
+    response.raise_for_status()
     return feedparser.parse(response.content)
 
 def clean_html(summary):
@@ -60,14 +59,13 @@ def build_buffer(feeds, term, use_color=True, display_all=False, display_day=Fal
                 if 'summary' in entry:
                     summary = clean_html(entry.summary).split('\n', 1)[0]  # Get the first line of the cleaned summary
                     feed_buffer.append(summary)
-                feed_buffer.append(" ")  # Add a visible blank line
+                feed_buffer.append("")
         
-        if feed_buffer:  # Only add the feed title if there is news
+        if feed_buffer:
             buffer.append(term.bold(feed_title) if use_color else feed_title)
-            buffer.append("")  # Add a blank line for separation
+            buffer.append("")
             buffer.extend(feed_buffer)
 
-    # If display_day is True, merge new_displayed_ids with day_ids to ensure consistency
     if display_day:
         day_ids.update(new_displayed_ids)
         new_displayed_ids = day_ids
@@ -78,12 +76,10 @@ def build_buffer(feeds, term, use_color=True, display_all=False, display_day=Fal
 def display_buffer(buffer, term, silent=False):
     if not buffer:
         if not silent:
-            print("No new news to display.")
+            print("No news to display.")
         return
 
-    # Get the terminal width
     terminal_width = shutil.get_terminal_size().columns
-    # Combine the buffer into a single string with wrapped lines
     wrapped_buffer = []
     for line in buffer:
         if line.strip() == "":  # Preserve blank lines
@@ -91,12 +87,9 @@ def display_buffer(buffer, term, silent=False):
         else:
             wrapped_lines = term.wrap(line, width=terminal_width)
             wrapped_buffer.extend(wrapped_lines)
-    # Join the lines into a single string
     buffer_string = "\n".join(wrapped_buffer)
-    # Write the buffer string to a temporary file
     with open('/tmp/rss_output.txt', 'w') as f:
         f.write(buffer_string)
-    # Use less to display the file with proper pagination and color support
     call(['less', '-R', '/tmp/rss_output.txt'])
 
 def load_displayed_ids(display_all, display_day):
