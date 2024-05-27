@@ -7,14 +7,14 @@ import os
 import json
 from datetime import datetime
 from blessed import Terminal
-from subprocess import call
+from subprocess import Popen, PIPE
 import argparse
 from bs4 import BeautifulSoup
 
 DATA_DIR = os.path.expanduser('~/.local/state/bsdnews/')
 DATA_FILE = os.path.join(DATA_DIR, 'bsdnews_data.json')
 
-# Default feed URL
+# Default feed URLs
 FREEBSD_URL = "https://www.freebsd.org/news/feed.xml"
 OPENBSD_URL = "http://undeadly.org/cgi?action=rss"
 NETBSD_URL = "https://www.netbsd.org/changes/rss-netbsd.xml"
@@ -88,9 +88,9 @@ def display_buffer(buffer, term, silent=False):
             wrapped_lines = term.wrap(line, width=terminal_width)
             wrapped_buffer.extend(wrapped_lines)
     buffer_string = "\n".join(wrapped_buffer)
-    with open('/tmp/rss_output.txt', 'w') as f:
-        f.write(buffer_string)
-    call(['less', '-R', '/tmp/rss_output.txt'])
+    
+    with Popen(['less', '-R'], stdin=PIPE) as less_proc:
+        less_proc.communicate(input=buffer_string.encode('utf-8'))
 
 def load_displayed_ids(display_all, display_day):
     if not os.path.exists(DATA_FILE):
